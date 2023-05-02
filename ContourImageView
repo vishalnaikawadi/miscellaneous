@@ -1,0 +1,67 @@
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Matrix
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.drawable.BitmapDrawable
+import android.util.AttributeSet
+import androidx.appcompat.widget.AppCompatImageView
+
+class ContourImageView @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : AppCompatImageView(context, attrs, defStyleAttr) {
+    private val paint = Paint()
+    private val contourPath = Path()
+
+    init {
+        // Initialize the Paint object
+        paint.color = Color.RED
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 10f
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        // Get the dimensions of the view
+        val width = width
+        val height = height
+
+        // Get the bitmap from the drawable resource
+        val drawable = drawable
+        if (drawable is BitmapDrawable) {
+            val bitmap = drawable.bitmap
+
+            // Calculate the scaling factor to fit the image inside the view
+            val scaleX = width.toFloat() / bitmap.width.toFloat()
+            val scaleY = height.toFloat() / bitmap.height.toFloat()
+            val scale = scaleX.coerceAtMost(scaleY)
+
+            // Calculate the offset to center the image inside the view
+            val offsetX = (width - bitmap.width * scale) / 2f
+            val offsetY = (height - bitmap.height * scale) / 2f
+
+            // Create a matrix to apply the scaling and offset
+            val matrix = Matrix()
+            matrix.setScale(scale, scale)
+            matrix.postTranslate(offsetX, offsetY)
+
+            // Draw the image with the matrix
+            canvas.drawBitmap(bitmap, matrix, null)
+
+            // Draw the contour around the image
+            contourPath.addRect(
+                offsetX,
+                offsetY,
+                offsetX + bitmap.width * scale,
+                offsetY + bitmap.height * scale,
+                Path.Direction.CW
+            )
+            canvas.drawPath(contourPath, paint)
+        } else {
+            // Handle the case where the drawable is not a BitmapDrawable
+            super.onDraw(canvas)
+        }
+    }
+}
